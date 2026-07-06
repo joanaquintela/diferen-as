@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pares de razões</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#fbffd7;height:100%;overflow:hidden}
+.wrap{width:100%;height:100%;display:flex;justify-content:center;align-items:center;gap:80px}
+button.play{width:56px;height:56px;border-radius:50%;background:#b8552e;border:none;cursor:pointer;display:flex;justify-content:center;align-items:center;transition:background .15s ease,transform .1s ease;padding:0}
+button.play:hover{background:#a24a27}
+button.play:active{transform:scale(.94)}
+button.play:focus-visible{outline:2px solid #1a2028;outline-offset:3px}
+button.play.playing{background:#6b6459}
+.triangle{width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-left:17px solid #fff;margin-left:5px}
+.bars{display:none;gap:4px}
+.bars span{width:5px;height:19px;background:#fff;border-radius:1px}
+button.play.playing .triangle{display:none}
+button.play.playing .bars{display:flex}
+</style>
+</head><body>
+<div class="wrap">
+<button class="play" id="play1"></button>
+<button class="play" id="play2"></button>
+<button class="play" id="play3"></button>
+</div>
+<script>
+(()=>{
+const F0=200;
+const SEQUENCES={play1:[64/45,7/5],play2:[8/5,13/8],play3:[16/9,7/4]};
+const STEP=.9,NOTE_DUR=1.15;
+let actx=null; const playingState={};
+function playNote(freq,when,dur,dest){
+const hs=[{mult:1,amp:1},{mult:2,amp:.45},{mult:3,amp:.22}];
+const ng=actx.createGain();
+ng.gain.setValueAtTime(.0001,when);
+ng.gain.exponentialRampToValueAtTime(.8,when+.008);
+ng.gain.exponentialRampToValueAtTime(.28,when+.18);
+ng.gain.exponentialRampToValueAtTime(.0001,when+dur);
+const f=actx.createBiquadFilter();f.type='lowpass';f.frequency.value=3500;f.Q.value=.6;
+ng.connect(f);f.connect(dest);
+hs.forEach(h=>{const o=actx.createOscillator();o.type='sine';o.frequency.setValueAtTime(freq*h.mult,when);const g=actx.createGain();g.gain.value=h.amp;o.connect(g);g.connect(ng);o.start(when);o.stop(when+dur+.05);});
+}
+Object.keys(SEQUENCES).forEach(id=>{
+const btn=document.getElementById(id);
+btn.innerHTML='<div class="triangle"></div><div class="bars"><span></span><span></span></div>';
+playingState[id]=false;
+btn.onclick=()=>{
+if(playingState[id])return;
+if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+if(actx.state==='suspended')actx.resume();
+playingState[id]=true;btn.classList.add('playing');
+const now=actx.currentTime;
+const master=actx.createGain();master.gain.value=.5;master.connect(actx.destination);
+const freqs=SEQUENCES[id].map(r=>F0*r);
+playNote(freqs[0],now,NOTE_DUR,master);
+playNote(freqs[1],now+STEP,NOTE_DUR,master);
+playNote(freqs[0],now+STEP*2,NOTE_DUR,master);
+playNote(freqs[1],now+STEP*2,NOTE_DUR,master);
+setTimeout(()=>{playingState[id]=false;btn.classList.remove('playing');},(STEP*2+NOTE_DUR+.2)*1000);
+};
+});
+})();
+</script></body></html>
