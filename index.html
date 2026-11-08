@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -54,11 +55,9 @@ playingState[id]=true;btn.classList.add('playing');
 const now=actx.currentTime;
 const master=actx.createGain();master.gain.value=.5;master.connect(actx.destination);
 const freqs=SEQUENCES[id].map(r=>F0*r);
-playNote(freqs[0],now,NOTE_DUR,master);
+playNote(freqs[0],now,NOTE_DUR+STEP,master);
 playNote(freqs[1],now+STEP,NOTE_DUR,master);
-playNote(freqs[0],now+STEP*2,NOTE_DUR,master);
-playNote(freqs[1],now+STEP*2,NOTE_DUR,master);
-setTimeout(()=>{playingState[id]=false;btn.classList.remove('playing');},(STEP*2+NOTE_DUR+.2)*1000);
+setTimeout(()=>{playingState[id]=false;btn.classList.remove('playing');},(STEP+NOTE_DUR+.2)*1000);
 };
 });
 })();
